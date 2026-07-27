@@ -1,0 +1,138 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CJPTV.in</title>
+
+<link rel="stylesheet" href="style.css">
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+</head>
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<body>
+<canvas id="particleCanvas"></canvas>
+<!-- SIDEBAR -->
+
+  <div id="sidebar" class="sidebar">
+
+  <div class="sidebar-header">
+
+    <h2>Chat History</h2>
+
+    <button id="closeSidebar">
+      ✕
+    </button>
+
+  </div>
+
+  <div id="historyList"></div>
+
+</div>
+
+<!-- NAME MODAL -->
+
+<div id="nameModal" class="modal">
+
+  <div class="modal-box">
+
+    <div class="welcome-logo">
+      ✨
+    </div>
+
+    <h2>Welcome to CJPTV.in</h2>
+
+    <p>Tell me your name first</p>
+
+    <input
+      id="nameInput"
+      type="text"
+      placeholder="Your name">
+
+    <button id="continueBtn" onclick="saveName()">Continue</button>
+
+  </div>
+
+</div>
+
+<!-- TOP BAR -->
+
+<div class="topbar">
+
+  <div class="top-left">
+
+
+    <a href="index.html" class="app-logo">
+<img src="assets/logo.png" alt="CJPTV">
+    </a>
+
+  </div>
+<div class="news-ticker">
+    <div class="ticker-label">🔴 LIVE</div>
+
+    <div class="ticker-content">
+        <div id="tickerText">Loading latest headlines...</div>
+    </div>
+</div>
+</div>
+
+<!-- HERO -->
+
+<div class="hero" id="hero">
+
+  <div class="logo">
+<img src="assets/logo.png" alt="CJPTV">
+  </div>
+
+  <h1 id="heroText">
+    What's next?
+  </h1>
+
+</div>
+
+<!-- CHAT -->
+
+<div id="chat"></div>
+
+<!-- GLOW -->
+
+<div class="bottom-glow"></div>
+
+<!-- INPUT -->
+
+<div class="input-bar">
+
+  <input
+    id="userInput"
+    type="text"
+    placeholder="Ask CJPTV..."
+    autocomplete="off">
+
+  <button id="sendBtn">
+    ➤
+  </button>
+
+</div>
+<div id="imageViewer" class="image-viewer">
+
+  <span id="closeImage">✕</span>
+
+  <span id="downloadImage">⬇️</span>
+
+  <img id="viewerImg">
+
+</div>
+
+</div>
+<script src="memory.js"></script>
+<script src="wiki.js"></script>
+<script src="router.js"></script>
+<script src="search.js"></script>
+<script src="script.js"></script>
+
+</body>
+</html>
