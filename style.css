@@ -1,0 +1,458 @@
+/* =========================
+/* =========================
+/* =========================
+RESET
+========================= */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+body{
+background:#000000;
+color:white;
+overflow:hidden;
+}
+/* =========================
+FUTURISTIC BACKGROUND
+========================= */
+body::before{
+content:"";
+position:fixed;
+inset:0;
+background:
+radial-gradient(circle at 20% 20%, #a30909fa, transparent 40%),
+radial-gradient(circle at 80% 80%, #000000, transparent 40%),
+radial-gradient(circle at 50% 50%, #000000, transparent 50%);
+z-index:-2;
+}
+.bottom-glow{
+position:fixed;
+bottom:-200px;
+left:50%;
+transform:translateX(-50%);
+width:600px;
+height:600px;
+background:radial-gradient(circle, #aa0000, transparent 70%);
+filter:blur(80px);
+z-index:-1;
+}
+/* =========================
+SIDEBAR GLASS
+========================= */
+.sidebar{
+position:fixed;
+left:-320px;
+top:0;
+width:300px;
+height:100%;
+background:rgba(255,255,255,0.06);
+backdrop-filter:blur(25px);
+border-right:1px solid rgba(255,255,255,0.1);
+transition:0.35s ease;
+padding:20px;
+z-index:1000;
+}
+.sidebar.open{
+left:0;
+}
+.sidebar-header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-bottom:20px;
+}
+.sidebar-header h2{
+font-size:18px;
+}
+#closeSidebar{
+background:none;
+border:none;
+color:white;
+font-size:20px;
+cursor:pointer;
+}
+#historyList{
+display:flex;
+flex-direction:column;
+gap:10px;
+overflow-y:auto;
+}
+#historyList div{
+padding:10px;
+border-radius:12px;
+background:rgba(255,255,255,0.05);
+cursor:pointer;
+transition:0.2s;
+}
+#historyList div:hover{
+background:rgba(255,255,255,0.12);
+transform:scale(1.02);
+}
+/* =========================
+TOP BAR
+========================= */
+.topbar{
+position:fixed;
+top:0;
+left:0;
+right:0;
+height:65px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 20px;
+backdrop-filter:blur(20px);
+background:rgba(255,255,255,0.04);
+border-bottom:1px solid rgba(255,255,255,0.08);
+z-index:999;
+}
+.top-left{
+display:flex;
+align-items:center;
+gap:12px;
+}
+.icon-btn{
+width:40px;
+height:40px;
+border-radius:12px;
+border:none;
+background:rgba(255,255,255,0.08);
+color:white;
+cursor:pointer;
+transition:0.2s;
+}
+.icon-btn:hover{
+background:rgba(255,255,255,0.15);
+transform:scale(1.05);
+}
+.app-title{
+font-size:16px;
+font-weight:600;
+}
+/* =========================
+MODAL GLASS
+========================= */
+.modal{
+position:fixed;
+inset:0;
+display:flex;
+align-items:center;
+justify-content:center;
+background:rgba(0,0,0,0.6);
+backdrop-filter:blur(10px);
+z-index:2000;
+}
+.modal-box{
+background:rgba(12,10,10,0.937);
+padding:30px;
+border-radius:20px;
+width:320px;
+text-align:center;
+backdrop-filter:blur(25px);
+border:1px solid rgba(255,255,255,0.1);
+animation:pop 0.4s ease;
+}
+@keyframes pop{
+from{transform:scale(0.8);opacity:0;}
+to{transform:scale(1);opacity:1;}
+}
+.modal-box input{
+width:100%;
+padding:12px;
+margin-top:15px;
+border:none;
+border-radius:12px;
+outline:none;
+background:rgba(255,255,255,0.08);
+color:white;
+}
+.modal-box button{
+margin-top:15px;
+padding:10px 20px;
+border:none;
+border-radius:12px;
+background:#e40404;
+color:white;
+cursor:pointer;
+}
+/* =========================
+HERO
+========================= */
+.hero{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+text-align:center;
+transition:0.4s ease;
+}
+.hero.hide{
+  display:none;
+}
+.logo{
+font-size:40px;
+animation:float 3s ease-in-out infinite;
+}
+@keyframes float{
+0%{transform:translateY(0px);}
+50%{transform:translateY(-10px);}
+100%{transform:translateY(0px);}
+}
+#heroText{
+font-size:34px;
+margin-top:10px;
+}
+/* =========================
+CHAT AREA
+========================= */
+#chat{
+position:absolute;
+top:80px;
+bottom:90px;
+left:50%;
+transform:translateX(-50%);
+width:90%;
+max-width:900px;
+overflow-y:auto;
+display:flex;
+flex-direction:column;
+gap:12px;
+padding:10px;
+}
+.user-msg{
+align-self:flex-end;
+background:#c30000;
+padding:12px 14px;
+border-radius:14px;
+max-width:70%;
+}
+.ai-msg{
+align-self:flex-start;
+background:rgba(255,255,255,0.06);
+border:1px solid rgba(255,255,255,0.08);
+padding:12px 14px;
+border-radius:14px;
+max-width:70%;
+backdrop-filter:blur(20px);
+}
+/* =========================
+INPUT BAR
+========================= */
+.input-bar{
+position:fixed;
+bottom:20px;
+left:50%;
+transform:translateX(-50%);
+width:90%;
+max-width:900px;
+display:flex;
+gap:10px;
+align-items:center;
+padding:10px;
+background:rgba(255,255,255,0.06);
+backdrop-filter:blur(20px);
+border-radius:20px;
+border:1px solid rgba(255,255,255,0.08);
+}
+.input-bar input{
+flex:1;
+padding:12px;
+border:none;
+outline:none;
+background:transparent;
+color:white;
+}
+.input-bar button{
+width:42px;
+height:42px;
+border:none;
+border-radius:12px;
+background:rgba(255,255,255,0.08);
+color:white;
+cursor:pointer;
+transition:0.2s;
+}
+.input-bar button:hover{
+background:rgba(255,255,255,0.15);
+transform:scale(1.05);
+}
+/* =========================
+RESPONSIVE
+========================= */
+@media(max-width:768px){
+#heroText{
+font-size:26px;
+}
+.input-bar{
+width:95%;
+}
+#chat{
+width:95%;
+}
+}
+.ai-image{
+  width:100%;
+  max-width:350px;
+  border-radius:15px;
+  margin:10px 0;
+}
+.image-viewer{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.95);
+  display:none;
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+}
+
+.image-viewer img{
+  max-width:95%;
+  max-height:90%;
+  border-radius:12px;
+}
+
+#closeImage{
+  position:absolute;
+  top:20px;
+  right:25px;
+  font-size:35px;
+  color:white;
+  cursor:pointer;
+  z-index:10000;
+}
+#downloadImage{
+  position:absolute;
+  top:20px;
+  left:25px;
+  font-size:30px;
+  cursor:pointer;
+  color:white;
+  z-index:10000;
+}
+/* =========================
+LIVE NEWS TICKER
+========================= */
+
+.news-ticker{
+position:fixed;
+top:65px;
+left:0;
+right:0;
+height:38px;
+
+display:flex;
+align-items:center;
+
+background:#111;
+border-top:1px solid rgba(255,255,255,.08);
+border-bottom:1px solid rgba(255,255,255,.08);
+
+z-index:998;
+
+overflow:hidden;
+}
+
+.ticker-label{
+
+background:#d50000;
+color:white;
+
+font-weight:700;
+
+padding:0 16px;
+
+height:100%;
+
+display:flex;
+align-items:center;
+
+letter-spacing:1px;
+
+flex-shrink:0;
+}
+
+.ticker-content{
+
+overflow:hidden;
+white-space:nowrap;
+
+width:100%;
+}
+
+#tickerText{
+
+display:inline-block;
+
+padding-left:100%;
+
+animation:tickerMove 28s linear infinite;
+
+font-size:14px;
+}
+
+@keyframes tickerMove{
+
+0%{
+
+transform:translateX(0);
+
+}
+
+100%{
+
+transform:translateX(-100%);
+
+}
+
+}
+/* =========================
+CJPTV LOGO
+========================= */
+
+.logo{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    margin-bottom:15px;
+}
+
+.logo img{
+    width:140px;
+    height:auto;
+    object-fit:contain;
+    animation:float 3s ease-in-out infinite;
+}
+
+.app-logo{
+    display:flex;
+    align-items:center;
+}
+
+.app-logo img{
+    width:120px;
+    height:auto;
+    object-fit:contain;
+}
+
+.welcome-logo{
+    width:90px;
+    height:auto;
+    display:block;
+    margin:0 auto 15px;
+}
+/* =========================
+   PARTICLE CANVAS
+========================= */
+
+#particleCanvas{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    z-index:-1;
+    pointer-events:none;
+}
