@@ -9,50 +9,68 @@ function saveMemory(key, value) {
   memory[key] = value;
   localStorage.setItem("memory", JSON.stringify(memory));
 }
+let chats =
+JSON.parse(localStorage.getItem("cjptv_chats")) || [];
 
+let currentChat = [];
 // =========================
 // ELEMENTS
 // =========================
 const hero = document.getElementById("hero");
 const heroText = document.getElementById("heroText");
 const chat = document.getElementById("chat");
-// =========================
-// LOAD SAVED USER
-// =========================
-
-window.onload = () => {
-
-    const savedName = localStorage.getItem("sambhav_username");
-
-    if(savedName){
-
-        memory.name = savedName;
-
-        heroText.innerText = `Welcome back, ${savedName} 👋`;
-
-        document.getElementById("nameModal").style.display = "none";
-
-    }else{
-
-        document.getElementById("nameModal").style.display = "flex";
-
-    }
-
-};
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
 const modal = document.getElementById("nameModal");
 const nameInput = document.getElementById("nameInput");
 
 // =========================
-// SAFE UI
+// LOAD SAVED USER
+// =========================
+window.onload = () => {
+  const savedName = localStorage.getItem("sambhav_username");
+  if (savedName) {
+    memory.name = savedName;
+    if (heroText) heroText.innerText = `Welcome back, ${savedName} 👋`;
+    if (modal) modal.style.display = "none";
+  } else if (modal) {
+    modal.style.display = "flex";
+  }
+  loadHistory();
+};
+const sidebar = document.getElementById("sidebar");
+const menuBtn = document.getElementById("menuBtn");
+const closeSidebar = document.getElementById("closeSidebar");
+
+menuBtn.onclick = () => {
+  sidebar.classList.add("open");
+};
+
+closeSidebar.onclick = () => {
+  sidebar.classList.remove("open");
+};
+// =========================
+// SAFE UI & HELPERS
 // =========================
 function addMessage(text, type) {
   const div = document.createElement("div");
   div.className = type;
   div.innerText = text;
+
   chat.appendChild(div);
   chat.scrollTop = chat.scrollHeight;
+
+  // Save message to current chat
+  currentChat.push({
+    text,
+    type
+  });
+}
+
+function safeRemove(el) {
+  if (el && el.parentNode) {
+    el.parentNode.removeChild(el);
+  }
 }
 
 // =========================
@@ -71,7 +89,7 @@ async function getWikiAnswer(query) {
 }
 
 // =========================
-// LIVE SEARCH (TAVILY)
+// TAVILY LIVE SEARCH
 // =========================
 async function liveSearch(query) {
   try {
@@ -79,33 +97,40 @@ async function liveSearch(query) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        api_key: TAVILY_API_KEY,
-        query,
+        api_key: typeof TAVILY_API_KEY !== "undefined" ? TAVILY_API_KEY : "",
+        query: query,
         search_depth: "advanced",
         include_answer: true,
         max_results: 3
       })
     });
-
-    const data = await res.json();
-    return data;
+    return await res.json();
   } catch (e) {
     console.log("Live Search Error:", e);
     return null;
   }
 }
+
+// =========================
+// IMAGE GENERATION
+// =========================
 async function generateImage(prompt) {
-
-  const url =
-    "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(prompt);
-
+  const url = "https://image.pollinations.ai/prompt/" + encodeURIComponent(prompt);
   addMessage("🎨 Generating image...", "ai-msg");
 
   const img = document.createElement("img");
   img.src = url;
   img.className = "ai-image";
   img.alt = prompt;
+
+  img.onclick = () => {
+    const viewerImg = document.getElementById("viewerImg");
+    const imageViewer = document.getElementById("imageViewer");
+    if (viewerImg && imageViewer) {
+      viewerImg.src = url;
+      imageViewer.style.display = "flex";
+    }
+  };
 
   chat.appendChild(img);
   chat.scrollTop = chat.scrollHeight;
@@ -115,57 +140,64 @@ async function generateImage(prompt) {
 // AI ENGINE
 // =========================
 async function askAI(message) {
-
-  const lower = message.toLowerCase();
-
-  // 1. Wikipedia
-  const clean = message
-    .replace(/who is|what is|where is|when was/gi, "")
-    .trim();
-
-  if (clean.length > 3) {
-    const wiki = await getWikiAnswer(clean);
-    if (wiki) return "📚 " + wiki;
+  // 1. Wikipedia ONLY for explicit definition queries
+  const isWikiQuery = /^(who is|what is|where is|when was)\s+/i.test(message);
+  if (isWikiQuery) {
+    const clean = message.replace(/^(who is|what is|where is|when was)\s+/gi, "").trim();
+    if (clean.length > 2) {
+      const wiki = await getWikiAnswer(clean);
+      if (wiki) return "📚 " + wiki;
+    }
   }
 
-  // 2. Live search
-  const needsLive =
-    lower.includes("current") ||
-    lower.includes("latest") ||
-    lower.includes("today") ||
-    lower.includes("news") ||
-    lower.includes("cm") ||
-    lower.includes("prime minister") ||
-    lower.includes("president");
-
-  if (needsLive) {
+  // 2. ALWAYS search Tavily
+  let liveContext = null;
+  try {
     const live = await liveSearch(message);
-
-    const answer =
-      live?.answer ||
-      live?.results?.[0]?.content;
-
-    if (answer) return "🌍 " + answer;
+    if (live) {
+      if (live.answer) {
+        liveContext = live.answer;
+      } else if (live.results && live.results.length > 0) {
+        liveContext = live.results
+          .map((r) => r.content)
+          .filter(Boolean)
+          .join("\n\n");
+      }
+    }
+  } catch (e) {
+    console.log("Tavily retrieval failed:", e);
   }
 
-// 3. AI fallback through Vercel Backend
+  // 3. Backend Call (Sends liveContext if Tavily retrieved info)
+  const payload = { message };
+  if (liveContext) {
+    payload.liveContext = liveContext;
+  }
 
-const res = await fetch(
-  BACKEND_URL,
-  {
+  const res = await fetch(BACKEND_URL, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({
-      message: message
-    })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content || data.reply || "No response received.";
+}
+
+// =========================
+// GREETING HANDLER
+// =========================
+function handleGreeting(message) {
+  const text = message.toLowerCase().trim();
+  const greetings = ["hi", "hello", "hey", "hii", "hola"];
+
+  if (greetings.includes(text)) {
+    addMessage(message, "user-msg");
+    addMessage("👋 Hello! How can I help you today?", "ai-msg");
+    userInput.value = "";
+    return true;
   }
-);
-
-const data = await res.json();
-
-return data.choices[0].message.content;
+  return false;
 }
 
 // =========================
@@ -173,121 +205,70 @@ return data.choices[0].message.content;
 // =========================
 async function sendMessage() {
   const message = userInput.value.trim();
-  if (handleGreeting(message)) return;
-  function handleGreeting(message) {
-  const text = message.toLowerCase().trim();
-
-  const greetings = ["hi", "hello", "hey", "hii", "hola"];
-
-  if (greetings.includes(text)) {
-    addMessage(message, "user-msg");
-    addMessage("👋 Hello! How can I help you today?", "ai-msg");
-    return true;
-  }
-
-  return false;
-  }
   if (!message) return;
 
-const lower = message.toLowerCase();
-// =========================
-// SAVE USER NAME
-// =========================
-if (lower.startsWith("my name is ")) {
+  if (handleGreeting(message)) return;
 
-  const name = message.substring(11).trim();
+  const lower = message.toLowerCase();
 
-  saveMemory("name", name);
-
-  addMessage(message, "user-msg");
-  addMessage("😊 Nice to meet you, " + name + "! I'll remember your name.", "ai-msg");
-
-  userInput.value = "";
-
-  return;
-}
-if (
-  lower.startsWith("draw ") ||
-  lower.startsWith("create image") ||
-  lower.startsWith("generate image") ||
-  lower.startsWith("make image") ||
-  lower.startsWith("create an image") ||
-  lower.startsWith("create an image of") ||
-  lower.startsWith("can you create image of") ||
-  lower.startsWith("design") ||
-  lower.startsWith("create poster of")
-) {
-
-  const prompt = message
-    .replace(/draw|create image|generate image|make image/gi, "")
-    .trim();
-
-  addMessage(message, "user-msg");
-
-  await generateImage(prompt);
-
-  userInput.value = "";
-
-  return;
-}
-if (
-  lower.includes("what is my name") ||
-  lower.includes("what's my name") ||
-  lower.includes("my name")
-) {
-  const name = memory.name;
-
-  addMessage(message, "user-msg");
-
-  if (name) {
-    addMessage("👤 Your name is " + name, "ai-msg");
-  } else {
-    addMessage("I don't know your name yet 😊", "ai-msg");
+  // Save Name Command
+  if (lower.startsWith("my name is ")) {
+    const name = message.substring(11).trim();
+    saveMemory("name", name);
+    addMessage(message, "user-msg");
+    addMessage("😊 Nice to meet you, " + name + "! I'll remember your name.", "ai-msg");
+    userInput.value = "";
+    return;
   }
 
-  return;
+  // Image Generation Command
+  const imageTriggers = [
+    "draw ", "create image", "generate image", "make image",
+    "create an image", "design", "create poster of"
+  ];
+  if (imageTriggers.some((trigger) => lower.startsWith(trigger))) {
+    const prompt = message
+      .replace(/draw|create image|generate image|make image|create an image|design|create poster of/gi, "")
+      .trim();
+
+    addMessage(message, "user-msg");
+    userInput.value = "";
+    await generateImage(prompt);
+    return;
+  }
+
+  // Name Recall Command
+  if (lower.includes("what is my name") || lower.includes("what's my name")) {
+    const name = memory.name;
+    addMessage(message, "user-msg");
+    if (name) {
+      addMessage("👤 Your name is " + name, "ai-msg");
+    } else {
+      addMessage("I don't know your name yet 😊", "ai-msg");
+    }
+    userInput.value = "";
+    return;
+  }
+
+  // Standard Pipeline Response
+if (hero) {
+  hero.classList.add("hide");
 }
-  addMessage(message, "user-msg");
-  userInput.value = "";
+ 
+addMessage(message, "user-msg");
+userInput.value = "";
 
   const loading = document.createElement("div");
   loading.className = "ai-msg";
   loading.innerText = "Thinking...";
   chat.appendChild(loading);
 
-  async function generateImage(prompt){
-
-  const url =
-  "https://image.pollinations.ai/prompt/" +
-  encodeURIComponent(prompt);
-
-  const img=document.createElement("img");
-
-  img.src=url;
-  img.className="ai-image";
-
-  img.onclick=()=>{
-
-    document.getElementById("viewerImg").src=url;
-
-    document.getElementById("imageViewer").style.display="flex";
-
-  };
-
-  chat.appendChild(img);
-
-  chat.scrollTop=chat.scrollHeight;
-
-}
-
   try {
     const reply = await askAI(message);
-
-setTimeout(() => {
-  safeRemove(loading);
-  addMessage(reply, "ai-msg");
-}, 50);
-
+    setTimeout(() => {
+      safeRemove(loading);
+      addMessage(reply, "ai-msg");
+    }, 50);
   } catch (err) {
     safeRemove(loading);
     addMessage("Error: " + err.message, "ai-msg");
@@ -295,183 +276,187 @@ setTimeout(() => {
 }
 
 // =========================
-// SAFE REMOVE (IMPORTANT)
+// EVENT LISTENERS & UI
 // =========================
-function safeRemove(el) {
-  if (el && el.parentNode) {
-    el.parentNode.removeChild(el);
-  }
+const closeImgBtn = document.getElementById("closeImage");
+if (closeImgBtn) {
+  closeImgBtn.onclick = () => {
+    const imageViewer = document.getElementById("imageViewer");
+    if (imageViewer) imageViewer.style.display = "none";
+  };
 }
 
-// =========================
-// EVENTS
-// =========================
-document.getElementById("closeImage").onclick=()=>{
-
-document.getElementById("imageViewer").style.display="none";
-
-};
-
-document.getElementById("imageViewer").onclick=(e)=>{
-
-if(e.target.id==="imageViewer"){
-
-document.getElementById("imageViewer").style.display="none";
-
+const imageViewer = document.getElementById("imageViewer");
+if (imageViewer) {
+  imageViewer.onclick = (e) => {
+    if (e.target.id === "imageViewer") {
+      imageViewer.style.display = "none";
+    }
+  };
 }
 
-};
-document.getElementById("downloadImage").onclick = () => {
+const downloadImgBtn = document.getElementById("downloadImage");
+if (downloadImgBtn) {
+  downloadImgBtn.onclick = () => {
+    const img = document.getElementById("viewerImg");
+    if (!img) return;
+    const a = document.createElement("a");
+    a.href = img.src;
+    a.download = "SambhavAI_Image.png";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  };
+}
 
-  const img = document.getElementById("viewerImg");
+if (sendBtn) sendBtn.addEventListener("click", sendMessage);
+if (userInput) {
+  userInput.addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+  });
+}
 
-  const a = document.createElement("a");
-
-  a.href = img.src;
-
-  a.download = "SambhavAI_Image.png";
-
-  document.body.appendChild(a);
-
-  a.click();
-
-  document.body.removeChild(a);
-
-};
-sendBtn.addEventListener("click", sendMessage);
-
-userInput.addEventListener("keypress", (e) => {
-  if (e.key === "Enter") sendMessage();
-});
-
-// =========================
-// CONTINUE BUTTON (FIXED)
-// =========================
 window.saveName = function () {
-  const name = nameInput.value.trim();
+  const name = nameInput ? nameInput.value.trim() : "";
   if (!name) return;
 
   localStorage.setItem("sambhav_username", name);
-
   saveMemory("name", name);
-  heroText.innerText = `What's next, ${name}?`;
-  if (modal) {
+  if (heroText) heroText.innerText = `What's next, ${name}?`;
+  if (modal) modal.style.display = "none";
+};
 
-    modal.style.display = "none";
-
+// =========================
+// NEWS TICKER
+// =========================
+async function loadTicker() {
+  try {
+    const res = await fetch("https://api.spaceflightnewsapi.net/v4/articles/?limit=8");
+    const data = await res.json();
+    const headlines = data.results.map((item) => "🔴 " + item.title).join("     •     ");
+    const ticker = document.getElementById("tickerText");
+    if (ticker) ticker.textContent = headlines;
+  } catch {
+    const ticker = document.getElementById("tickerText");
+    if (ticker) ticker.textContent = "Unable to load latest headlines.";
   }
-  };async function loadTicker(){
-
-try{
-
-const res = await fetch(
-"https://api.spaceflightnewsapi.net/v4/articles/?limit=8"
-);
-
-const data = await res.json();
-
-const headlines = data.results
-.map(item => "🔴 " + item.title)
-.join("     •     ");
-
-document.getElementById("tickerText").textContent = headlines;
-
-}catch{
-
-document.getElementById("tickerText").textContent =
-"Unable to load latest headlines.";
-
-}
-
 }
 
 loadTicker();
+setInterval(loadTicker, 300000);
 
-setInterval(loadTicker,300000);
 // =========================
-// CJPTV PARTICLE BACKGROUND
+// BACKGROUND PARTICLES
 // =========================
-
 const canvas = document.getElementById("particleCanvas");
-const ctx = canvas.getContext("2d");
+if (canvas) {
+  const ctx = canvas.getContext("2d");
 
-function resizeCanvas(){
+  function resizeCanvas() {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
-}
+  }
 
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
 
-const particles = [];
-
-for(let i=0;i<45;i++){
-
+  const particles = [];
+  for (let i = 0; i < 45; i++) {
     particles.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: Math.random() * 3 + 2,
+      dx: (Math.random() - 0.5) * 1.2,
+      dy: (Math.random() - 0.5) * 1.2
+    });
+  }
 
-        x:Math.random()*canvas.width,
-        y:Math.random()*canvas.height,
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < particles.length; i++) {
+      const p = particles[i];
+      p.x += p.dx;
+      p.y += p.dy;
 
-        r:Math.random()*3+2,
+      if (p.x < 0 || p.x > canvas.width) p.dx *= -1.2;
+      if (p.y < 0 || p.y > canvas.height) p.dy *= -1.2;
 
-        dx:(Math.random()-0.5)*1.2,
-dy:(Math.random()-0.5)*1.2
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,0,0,0.35)";
+      ctx.shadowColor = "red";
+      ctx.shadowBlur = 15;
+      ctx.fill();
+
+      for (let j = i + 1; j < particles.length; j++) {
+        const p2 = particles[j];
+        const dist = Math.hypot(p.x - p2.x, p.y - p2.y);
+        if (dist < 120) {
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.strokeStyle = "rgba(255,0,0,0.08)";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+// =========================
+// NEW CHAT BUTTON
+// =========================
+document.getElementById("newChatBtn").onclick = () => {
+
+    if (currentChat.length) {
+
+        chats.unshift({
+            title: currentChat[0].text.substring(0, 30),
+            messages: currentChat
+        });
+
+        localStorage.setItem(
+            "cjptv_chats",
+            JSON.stringify(chats)
+        );
+    }
+
+    currentChat = [];
+
+    chat.innerHTML = "";
+
+    hero.classList.remove("hide");
+
+    loadHistory();
+};
+function loadHistory() {
+
+    const list = document.getElementById("historyList");
+
+    list.innerHTML = "";
+
+    chats.forEach((c) => {
+
+        const item = document.createElement("div");
+
+        item.innerText = c.title;
+
+        item.onclick = () => {
+
+            chat.innerHTML = "";
+
+            currentChat = [];
+
+            c.messages.forEach((m) => {
+                addMessage(m.text, m.type);
+            });
+
+        };
+
+        list.appendChild(item);
 
     });
 
 }
-
-function animate(){
-
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-
-    for(let i=0;i<particles.length;i++){
-
-        const p=particles[i];
-
-        p.x+=p.dx;
-        p.y+=p.dy;
-
-        if(p.x<0||p.x>canvas.width)p.dx*=-1.2;
-        if(p.y<0||p.y>canvas.height)p.dy*=-1.2;
-
-        ctx.beginPath();
-
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-
-        ctx.fillStyle="rgba(255,0,0,0.35)";
-
-        ctx.shadowColor="red";
-        ctx.shadowBlur=15;
-
-        ctx.fill();
-
-        for(let j=i+1;j<particles.length;j++){
-
-            const p2=particles[j];
-
-            const dist=Math.hypot(p.x-p2.x,p.y-p2.y);
-
-            if(dist<120){
-
-                ctx.beginPath();
-
-                ctx.moveTo(p.x,p.y);
-                ctx.lineTo(p2.x,p2.y);
-
-                ctx.strokeStyle="rgba(255,0,0,0.08)";
-                ctx.lineWidth=1;
-
-                ctx.stroke();
-
-            }
-
-        }
-
-    }
-
-    requestAnimationFrame(animate);
-
-}
-
-animate();
