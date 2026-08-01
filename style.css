@@ -797,3 +797,25 @@ body::after {
     left: -90vw;
   }
 }
+/* ===== Fix Welcome Modal Text ===== */
+
+.modal-box h2{
+    color: #ffffff !important;
+    font-weight: 600;
+}
+
+.modal-box p{
+    color: rgba(255,255,255,0.75) !important;
+}
+
+.modal-box label{
+    color: #ffffff !important;
+}
+
+#nameInput{
+    color: #ffffff !important;
+}
+
+#nameInput::placeholder{
+    color: rgba(255,255,255,0.45) !important;
+}
