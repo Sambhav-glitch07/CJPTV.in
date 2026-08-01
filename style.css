@@ -819,3 +819,45 @@ body::after {
 #nameInput::placeholder{
     color: rgba(255,255,255,0.45) !important;
 }
+/* ===== Copyright Footer ===== */
+.copyright {
+    position: fixed;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: rgba(255,255,255,0.45);
+    font-size: 11px;
+    letter-spacing: 0.3px;
+    z-index: 998;
+    pointer-events: none;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .copyright {
+        font-size: 10px;
+        bottom: 4px;
+    }
+}
+.social-links {
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+ 
+.social-links a {
+    display: block;
+    padding: 12px;
+    border-radius: 14px;
+    background: rgba(248,80,28,0.12);
+    color: white;
+    text-decoration: none;
+    font-size: 14px;
+    text-align: center;
+    transition: .3s;
+}
+
+.social-links a:hover {
+    background: #f8501c;
+    transform: translateY(-2px);
+}
