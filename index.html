@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="icon" type="image/png" href="/favicon.png">
-<meta name="google-site-verification" content="8F2N0-1syD3l971mkXOhIGPr2U5BwfkXRc3STv7K0_8" />
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
@@ -21,19 +20,18 @@ content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 
   <div id="sidebar" class="sidebar">
 
-  <div class="sidebar-header">
-
-    <h2>Chat History</h2>
-
-    <button id="closeSidebar">
-      ✕
+    <button id="newChatBtn" class="new-chat-btn">
+        + New Chat
     </button>
 
+    <div class="sidebar-header">
+        <h2>Chat History</h2>
+        <button id="closeSidebar">✕</button>
+    </div>
+
+    <div id="historyList"></div>
+
   </div>
-
-  <div id="historyList"></div>
-
-</div>
 
 <!-- NAME MODAL -->
 
@@ -65,7 +63,7 @@ content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <div class="topbar">
 
   <div class="top-left">
-
+<button id="menuBtn" class="icon-btn">☰</button>
 
     <a href="index.html" class="app-logo">
 <img src="assets/logo.png" alt="CJPTV">
