@@ -528,25 +528,27 @@ user.photoURL ||
 
 });
 document.getElementById("sidebarLoginBtn").onclick = async () => {
+    console.log("LOGIN CLICKED");
 
-    if(auth.currentUser){
+    try {
+        if (auth.currentUser) {
 
-        if(auth.currentUser.isAnonymous){
+            if (auth.currentUser.isAnonymous) {
+                await signOut(auth);
+                await signInWithPopup(auth, provider);
+            } else {
+                await signOut(auth);
+                location.reload();
+            }
 
-            await signOut(auth);
-            await signInWithPopup(auth,provider);
-
-        }else{
-
-            await signOut(auth);
-            location.reload();
-
+        } else {
+            await signInWithPopup(auth, provider);
         }
 
-    }else{
-
-        await signInWithPopup(auth,provider);
-
+    } catch (err) {
+        console.log(err);
+        alert(err.code + "\n" + err.message);
     }
-
 };
+document.getElementById("copyrightYear").textContent =
+new Date().getFullYear();
