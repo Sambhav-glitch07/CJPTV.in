@@ -476,6 +476,21 @@ function loadHistory() {
     });
 
 }
+document.getElementById("guestBtn").onclick = async () => {
+    try {
+        await signInAnonymously(auth);
+    } catch (err) {
+        console.error(err);
+    }
+};
+document.getElementById("googleLoginBtn").onclick = async () => {
+    try {
+        await signInWithPopup(auth, provider);
+    } catch (err) {
+        console.error(err);
+        alert(err.message);
+    }
+};
 onAuthStateChanged(auth, (user) => {
 
     if (!user) return;
