@@ -1,3 +1,11 @@
+import {
+    auth,
+    provider,
+    signInWithPopup,
+    signInAnonymously,
+    signOut,
+    onAuthStateChanged
+} from "./firebase.js";
 const BACKEND_URL = "https://cjptv-backendv3.vercel.app/api/chat";
 
 // =========================
@@ -22,7 +30,7 @@ const chat = document.getElementById("chat");
 const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
 const modal = document.getElementById("nameModal");
-const nameInput = document.getElementById("nameInput");
+
 
 // =========================
 // LOAD SAVED USER
@@ -265,14 +273,31 @@ userInput.value = "";
 
   try {
     const reply = await askAI(message);
-    setTimeout(() => {
-      safeRemove(loading);
-      addMessage(reply, "ai-msg");
-    }, 50);
-  } catch (err) {
+
+    // Remove the "Thinking..." bubble
+    safeRemove(loading);
+
+    const div = document.createElement("div");
+    div.className = "ai-msg";
+    chat.appendChild(div);
+
+    let i = 0;
+
+    function typeWriter() {
+        if (i < reply.length) {
+            div.textContent += reply.charAt(i);
+            i++;
+            chat.scrollTop = chat.scrollHeight;
+            setTimeout(typeWriter, 15);
+        }
+    }
+
+    typeWriter();
+
+} catch (err) {
     safeRemove(loading);
     addMessage("Error: " + err.message, "ai-msg");
-  }
+} 
 }
 
 // =========================
@@ -316,15 +341,6 @@ if (userInput) {
   });
 }
 
-window.saveName = function () {
-  const name = nameInput ? nameInput.value.trim() : "";
-  if (!name) return;
-
-  localStorage.setItem("sambhav_username", name);
-  saveMemory("name", name);
-  if (heroText) heroText.innerText = `What's next, ${name}?`;
-  if (modal) modal.style.display = "none";
-};
 
 // =========================
 // NEWS TICKER
@@ -460,3 +476,62 @@ function loadHistory() {
     });
 
 }
+onAuthStateChanged(auth, (user) => {
+
+    if (!user) return;
+
+    console.log("Photo URL:", user.photoURL);
+
+    document.getElementById("nameModal").style.display = "none";
+
+    const loginBtn=document.getElementById("sidebarLoginBtn");
+
+    if(user.isAnonymous){
+
+        heroText.innerText="Welcome, Guest 👋";
+
+        document.getElementById("userName").innerText="Guest";
+
+        document.getElementById("userStatus").innerText="Guest Mode";
+
+        loginBtn.innerText="Login";
+
+    }else{
+
+        heroText.innerText=`Welcome, ${user.displayName} 👋`;
+
+        document.getElementById("userName").innerText=user.displayName;
+
+        document.getElementById("userStatus").innerText=user.email;
+
+        document.getElementById("userAvatar").src =
+user.photoURL ||
+`https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName)}&background=f8501c&color=fff`;
+
+        loginBtn.innerText="Logout";
+    }
+
+});
+document.getElementById("sidebarLoginBtn").onclick = async () => {
+
+    if(auth.currentUser){
+
+        if(auth.currentUser.isAnonymous){
+
+            await signOut(auth);
+            await signInWithPopup(auth,provider);
+
+        }else{
+
+            await signOut(auth);
+            location.reload();
+
+        }
+
+    }else{
+
+        await signInWithPopup(auth,provider);
+
+    }
+
+};
