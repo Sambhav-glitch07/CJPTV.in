@@ -1,175 +1,485 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CJPTV AI</title>
 
-<title>CJPTV.in</title>
+    <link rel="icon" href="assets/logo.png">
 
-<link rel="icon" type="image/png" href="/favicon.png?v=2">
-<link rel="apple-touch-icon" href="/favicon.png">
-<link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css">
 
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet"
+    >
 </head>
+
 <body>
-<canvas id="particleCanvas"></canvas>
-<!-- SIDEBAR -->
 
-  <div id="sidebar" class="sidebar">
-<footer class="footer">
-    <p>
-        © <span id="copyrightYear"></span> CJPTV.in. All Rights Reserved.
-    </p>
-    <p class="made-by">
-        Owned by <strong>Sambhav Gupta</strong>
-       <br>Made with ❤️ by <strong>Sambhav Gupta</strong>
-    </p>
-</footer>
-    <div class="account-box">
+    <!-- =====================================================
+         BACKGROUND
+    ====================================================== -->
 
-        <img id="userAvatar"
-     src="https://ui-avatars.com/api/?name=Guest&background=f8501c&color=fff"
-     class="account-avatar"
-     referrerpolicy="no-referrer">
+    <canvas id="particleCanvas"></canvas>
 
-        <div class="account-info">
-            <span id="userName">Guest</span>
-            <small id="userStatus">Not signed in</small>
+    <div class="fire-bg"></div>
+    <div class="fire-glow fire-glow-1"></div>
+    <div class="fire-glow fire-glow-2"></div>
+    <div class="fire-glow fire-glow-3"></div>
+
+
+    <!-- =====================================================
+         SIDEBAR
+    ====================================================== -->
+
+    <aside id="sidebar" class="sidebar">
+
+        <div class="sidebar-inner">
+
+            <!-- Account -->
+
+            <div class="account-box">
+
+                <img
+                    id="userAvatar"
+                    class="account-avatar"
+                    src="https://ui-avatars.com/api/?name=Guest&background=f8501c&color=fff"
+                    alt="User"
+                    referrerpolicy="no-referrer"
+                >
+
+                <div class="account-info">
+                    <span id="userName">Guest</span>
+                    <small id="userStatus">Not signed in</small>
+                </div>
+
+                <button
+                    id="sidebarLoginBtn"
+                    class="sidebar-login-btn"
+                >
+                    Login
+                </button>
+
+            </div>
+
+
+            <!-- About -->
+
+            <button
+                id="aboutBtn"
+                class="about-btn"
+            >
+                <span>ⓘ</span>
+                <span>About CJPTV</span>
+            </button>
+
+
+            <!-- New Chat -->
+
+            <button
+                id="newChatBtn"
+                class="new-chat-btn"
+            >
+                <span class="new-chat-plus">+</span>
+                <span>New Chat</span>
+            </button>
+
+
+            <!-- History -->
+
+            <div class="sidebar-header">
+
+                <h2>Chat History</h2>
+
+                <button
+                    id="closeSidebar"
+                    class="close-sidebar"
+                >
+                    ×
+                </button>
+
+            </div>
+
+            <div id="historyList" class="history-list"></div>
+
+
+            <!-- Social -->
+
+            <div class="sidebar-bottom">
+
+                <a
+                    href="https://instagram.com/realcjptv.in"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="instagram-link"
+                >
+                    <span class="instagram-icon">◎</span>
+                    <span>Follow us on Instagram</span>
+                </a>
+
+                <div class="sidebar-version">
+                    CJPTV AI • Fire Edition
+                </div>
+
+            </div>
+
         </div>
 
-        <button id="sidebarLoginBtn" class="sidebar-login-btn">
-            Login
+    </aside>
+
+
+    <!-- =====================================================
+         LOGIN MODAL
+    ====================================================== -->
+
+    <div id="nameModal" class="modal">
+
+        <div class="modal-overlay"></div>
+
+        <div class="modal-box">
+
+            <div class="modal-fire-ring">
+                <div class="modal-logo">
+                    ✨
+                </div>
+            </div>
+
+            <div class="modal-badge">
+                CJPTV AI
+            </div>
+
+            <h2>Welcome to CJPTV AI</h2>
+
+            <p>
+                Your AI assistant for technology,
+                information and digital innovation.
+            </p>
+
+            <button
+                id="googleLoginBtn"
+                class="google-login-btn"
+            >
+                <span class="google-icon">G</span>
+                <span>Continue with Google</span>
+            </button>
+
+            <div class="login-divider">
+                <span></span>
+                <b>OR</b>
+                <span></span>
+            </div>
+
+            <button
+                id="guestBtn"
+                class="guest-btn"
+            >
+                Continue as Guest
+            </button>
+
+            <small class="modal-note">
+                By continuing, you agree to use CJPTV AI responsibly.
+            </small>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         TOP BAR
+    ====================================================== -->
+
+    <header class="topbar">
+
+        <div class="top-left">
+
+            <button
+                id="menuBtn"
+                class="icon-btn"
+                aria-label="Open menu"
+            >
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <a
+                href="index.html"
+                class="app-logo"
+            >
+                <img
+                    src="assets/logo.png"
+                    alt="CJPTV"
+                >
+            </a>
+
+        </div>
+
+
+        <!-- Live News -->
+
+        <div class="news-ticker">
+
+            <div class="ticker-label">
+                <span class="live-dot"></span>
+                LIVE
+            </div>
+
+            <div class="ticker-content">
+                <div id="tickerText">
+                    Loading latest headlines...
+                </div>
+            </div>
+
+        </div>
+
+    </header>
+
+
+    <!-- =====================================================
+         MAIN
+    ====================================================== -->
+
+    <main class="main-content">
+
+        <!-- Hero -->
+
+        <section
+            id="hero"
+            class="hero"
+        >
+
+            <div class="hero-fire-ring">
+
+                <div class="hero-logo">
+                    <img
+                        src="assets/logo.png"
+                        alt="CJPTV"
+                    >
+                </div>
+
+            </div>
+
+            <div class="hero-badge">
+                <span></span>
+                CJPTV AI
+            </div>
+
+            <h1 id="heroText">
+                What's next?
+            </h1>
+
+            <p class="hero-subtitle">
+                Ask anything. Get intelligent answers.
+            </p>
+
+            <div class="hero-suggestions">
+
+                <Button
+                    onclick="document.getElementById('userInput').value='What is the latest technology news?'; document.getElementById('sendBtn').click();"
+                >
+                    <span>🔥</span>
+                    Latest tech news
+                </Button>
+                <button
+                    onclick="document.getElementById('userInput').value='Explain something interesting to me'; document.getElementById('sendBtn').click();"
+                >
+                    <span>💡</span>
+                    Surprise me
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- Chat -->
+
+        <section
+            id="chat"
+            class="chat"
+        ></section>
+
+    </main>
+
+
+    <!-- =====================================================
+         BOTTOM FIRE GLOW
+    ====================================================== -->
+
+    <div class="bottom-glow"></div>
+
+
+    <!-- =====================================================
+         INPUT
+    ====================================================== -->
+
+        <!-- =====================================================
+         INPUT
+    ====================================================== -->
+
+    <div class="input-area">
+
+        <!-- Image Preview Thumbnail (shown when image is selected) -->
+        <div id="imagePreviewContainer" class="image-preview-container" style="display: none;">
+            <div class="preview-wrapper">
+                <img id="imagePreview" src="" alt="Selected Image">
+                <button id="removeImageBtn" class="remove-image-btn" type="button" aria-label="Remove image">×</button>
+            </div>
+        </div>
+
+        <div class="input-bar">
+
+            <div class="input-fire"></div>
+
+            <!-- Hidden File Input -->
+            <input type="file" id="imageInput" accept="image/*" style="display: none;">
+
+            <!-- Plus Icon Button for Attachment -->
+            <button id="attachBtn" class="attach-btn" type="button" title="Attach image">
+                <span>+</span>
+            </button>
+
+            <input
+                id="userInput"
+                type="text"
+                placeholder="Ask CJPTV anything..."
+                autocomplete="off"
+                spellcheck="true"
+            >
+
+            <button
+                id="sendBtn"
+                class="send-btn"
+                aria-label="Send"
+            >
+                <span>➤</span>
+            </button>
+
+        </div>
+
+        <div class="input-disclaimer">
+            CJPTV AI can make mistakes. Check important information.
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         IMAGE VIEWER
+    ====================================================== -->
+
+    <div
+        id="imageViewer"
+        class="image-viewer"
+    >
+
+        <button
+            id="closeImage"
+            class="viewer-close"
+        >
+            ×
         </button>
 
+        <button
+            id="downloadImage"
+            class="viewer-download"
+        >
+            ↓
+        </button>
+
+        <img
+            id="viewerImg"
+            src=""
+            alt="Generated image"
+        >
+
     </div>
 
-    <button id="newChatBtn" class="new-chat-btn">
-        + New Chat
-    </button>
 
+    <!-- =====================================================
+         ABOUT
+    ====================================================== -->
 
-    <div class="sidebar-header">
-        <h2>Chat History</h2>
-        <button id="closeSidebar">✕</button>
+    <div
+        id="aboutModal"
+        class="about-modal"
+    >
+
+        <div class="about-overlay"></div>
+
+        <div class="about-box">
+
+            <button
+                id="closeAbout"
+                class="about-close"
+            >
+                ×
+            </button>
+
+            <div class="about-logo-wrap">
+
+                <img
+                    src="assets/logo.png"
+                    alt="CJPTV Logo"
+                    class="about-logo"
+                >
+
+            </div>
+
+            <div class="about-label">
+                CJPTV
+            </div>
+
+            <h2>About CJPTV</h2>
+
+            <p class="about-tagline">
+                AI • Technology • Digital Innovation
+            </p>
+
+            <p>
+                <strong>CJPTV</strong> is an independently
+                owned digital platform focused on technology,
+                artificial intelligence, digital content,
+                and innovative online experiences.
+            </p>
+
+            <p>
+                CJPTV is <strong>fully owned by Sambhav Gupta</strong>.
+                The platform and its digital products are
+                developed and managed under CJPTV.
+            </p>
+
+            <div class="about-divider"></div>
+
+            <p class="about-owner">
+                <span>Owner & Developer</span>
+                <strong>Sambhav Gupta</strong>
+            </p>
+
+            <p class="about-copyright">
+                © <span id="aboutYear"></span>
+                CJPTV. All Rights Reserved.
+            </p>
+
+        </div>
+
     </div>
 
-    <div id="historyList"></div>
-<div class="social-links">
 
-  <a href="https://instagram.com/realcjptv.in" target="_blank">
-    📷 Follow us on Instagram
-  </a>
+    <!-- =====================================================
+         SCRIPTS
+    ====================================================== -->
 
-</div>
-  </div>
+    <script src="memory.js"></script>
+    <script src="wiki.js"></script>
+    <script src="router.js"></script>
+    <script src="search.js"></script>
 
-<!-- NAME MODAL -->
+    <script type="module" src="firebase.js"></script>
+    <script type="module" src="script.js"></script>
 
-<div id="nameModal" class="modal">
-
-  <div class="modal-box">
-
-    <div class="welcome-logo">
-      ✨
-    </div>
-
-  <h2>Welcome to CJPTV AI</h2>
-
-<p>Choose how you want to continue</p>
-
-<button id="googleLoginBtn">
-    Continue with Google
-</button>
-
-<div class="login-divider">
-    <span>OR</span>
-</div>
-
-<button id="guestBtn">
-    Continue as Guest
-</button>
-
-  </div>
-
-</div>
-
-<!-- TOP BAR -->
-
-<div class="topbar">
-
-  <div class="top-left">
-<button id="menuBtn" class="icon-btn">☰</button>
-
-    <a href="index.html" class="app-logo">
-<img src="assets/logo.png" alt="CJPTV">
-    </a>
-
-  </div>
-<div class="news-ticker">
-    <div class="ticker-label">🔴 LIVE</div>
-
-    <div class="ticker-content">
-        <div id="tickerText">Loading latest headlines...</div>
-    </div>
-</div>
-</div>
-
-<!-- HERO -->
-
-<div class="hero" id="hero">
-
-  <div class="logo">
-<img src="assets/logo.png" alt="CJPTV">
-  </div>
-
-  <h1 id="heroText">
-    What's next?
-  </h1>
-
-</div>
-
-<!-- CHAT -->
-
-<div id="chat"></div>
-
-<!-- GLOW -->
-
-<div class="bottom-glow"></div>
-
-<!-- INPUT -->
-
-<div class="input-bar">
-
-  <input
-    id="userInput"
-    type="text"
-    placeholder="Ask CJPTV..."
-    autocomplete="off">
-
-  <button id="sendBtn">
-    ➤
-  </button>
-
-</div>
-<div id="imageViewer" class="image-viewer">
-
-  <span id="closeImage">✕</span>
-
-  <span id="downloadImage">⬇️</span>
-
-  <img id="viewerImg">
-
-
-</div>
-<script src="memory.js"></script>
-<script src="wiki.js"></script>
-<script src="router.js"></script>
-<script src="search.js"></script>
-
-<script type="module" src="firebase.js"></script>
-<script type="module" src="script.js"></script>
 </body>
 </html>
