@@ -15,12 +15,12 @@ const BACKEND_URL = "https://cjptv-backendv3.vercel.app/api/chat";
 let memory = JSON.parse(localStorage.getItem("memory")) || {};
 
 function saveMemory(key, value) {
-  memory[key] = value;
-  localStorage.setItem("memory", JSON.stringify(memory));
+    memory[key] = value;
+    localStorage.setItem("memory", JSON.stringify(memory));
 }
 
 let chats =
-JSON.parse(localStorage.getItem("cjptv_chats")) || [];
+    JSON.parse(localStorage.getItem("cjptv_chats")) || [];
 
 let currentChat = [];
 
@@ -34,175 +34,170 @@ const userInput = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
 const modal = document.getElementById("nameModal");
 
-// =========================
-// LOAD SAVED USER
-// =========================
-window.onload = () => {
-  const savedName = localStorage.getItem("sambhav_username");
-
-  if (savedName) {
-    memory.name = savedName;
-
-    if (heroText)
-      heroText.innerText = `Welcome back, ${savedName} 👋`;
-
-    if (modal)
-      modal.style.display = "none";
-
-  } else if (modal) {
-    modal.style.display = "flex";
-  }
-
-  loadHistory();
-};
-
 const sidebar = document.getElementById("sidebar");
 const menuBtn = document.getElementById("menuBtn");
 const closeSidebar = document.getElementById("closeSidebar");
 
-menuBtn.onclick = () => {
-  sidebar.classList.add("open");
-};
+// =========================
+// LOAD SAVED USER
+// =========================
+window.onload = () => {
 
-closeSidebar.onclick = () => {
-  sidebar.classList.remove("open");
+    const savedName = localStorage.getItem("sambhav_username");
+
+    if (savedName) {
+
+        memory.name = savedName;
+
+        if (heroText) {
+            heroText.innerText =
+                `Welcome back, ${savedName} 👋`;
+        }
+
+        if (modal) {
+            modal.style.display = "none";
+        }
+
+    } else if (modal) {
+
+        modal.style.display = "flex";
+    }
+
+    loadHistory();
 };
 
 // =========================
-// SAFE UI & HELPERS
+// SIDEBAR
 // =========================
-function addMessage(text, type) {
-  const div = document.createElement("div");
+if (menuBtn) {
+    menuBtn.onclick = () => {
+        sidebar.classList.add("open");
+    };
+}
 
-  div.className = type;
-  div.innerText = text;
+if (closeSidebar) {
+    closeSidebar.onclick = () => {
+        sidebar.classList.remove("open");
+    };
+}
 
-  chat.appendChild(div);
-  chat.scrollTop = chat.scrollHeight;
+// =========================
+// SAFE UI
+// =========================
+function addMessage(text, type, save = true) {
 
-  currentChat.push({
-    text,
-    type
-  });
+    const div = document.createElement("div");
+
+    div.className = type;
+    div.innerText = text;
+
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+
+    if (save) {
+
+        currentChat.push({
+            text,
+            type
+        });
+    }
+
+    return div;
 }
 
 function safeRemove(el) {
-  if (el && el.parentNode) {
-    el.parentNode.removeChild(el);
-  }
-}
 
-// =========================
-// AI ENGINE
-// =========================
-async function askAI(message) {
-
-  /*
-    API FLOW:
-
-    Browser
-       ↓
-    Vercel /api/chat
-       ↓
-    Gemini
-       +
-    Tavily when needed
-
-    No API keys are exposed in this frontend.
-  */
-
-  const payload = {
-    message: message
-  };
-
-  const res = await fetch(BACKEND_URL, {
-    method: "POST",
-
-    headers: {
-      "Content-Type": "application/json"
-    },
-
-    body: JSON.stringify(payload)
-  });
-
-  if (!res.ok) {
-    let errorMessage = `Server error: ${res.status}`;
-
-    try {
-      const errorData = await res.json();
-
-      if (errorData?.error) {
-        errorMessage = errorData.error;
-      }
-
-      if (errorData?.details) {
-        errorMessage += ` - ${errorData.details}`;
-      }
-
-    } catch {}
-
-    throw new Error(errorMessage);
-  }
-
-  const data = await res.json();
-
-  /*
-    Your new backend returns:
-
-    {
-      success: true,
-      reply: "...",
-      answer: "...",
-      searched: true/false,
-      sources: [...]
+    if (el && el.parentNode) {
+        el.parentNode.removeChild(el);
     }
-  */
-
-  if (data.reply) {
-    return data.reply;
-  }
-
-  if (data.answer) {
-    return data.answer;
-  }
-
-  // Keep compatibility with the old response format
-  if (data.choices?.[0]?.message?.content) {
-    return data.choices[0].message.content;
-  }
-
-  return "No response received.";
 }
 
 // =========================
-// GREETING HANDLER
+// LOCAL CHAT RESPONSES
 // =========================
-function handleGreeting(message) {
-  const text = message.toLowerCase().trim();
+// These work WITHOUT Tavily/Gemini.
+// Useful for identity, greetings and simple casual conversation.
+function getLocalResponse(message) {
 
-  const greetings = [
-    "hi",
-    "hello",
-    "hey",
-    "hii",
-    "hola"
-  ];
+    const text = message.toLowerCase().trim();
 
-  if (greetings.includes(text)) {
+    // Greetings
+    if (
+        ["hi", "hello", "hey", "hii", "hiii", "hola"]
+            .includes(text)
+    ) {
+        return "👋 Hey! I'm CJPTV AI. How can I help you?";
+    }
 
-    addMessage(message, "user-msg");
+    // Who are you?
+    if (
+        text.includes("who are you") ||
+        text.includes("what are you")
+    ) {
+        return "🤖 I'm CJPTV AI, your AI assistant. I can chat with you, answer questions, and use live web search when you need current information.";
+    }
 
-    addMessage(
-      "👋 Hello! How can I help you today?",
-      "ai-msg"
-    );
+    // Who made you?
+    if (
+        text.includes("who made you") ||
+        text.includes("who created you") ||
+        text.includes("who built you") ||
+        text.includes("who developed you")
+    ) {
+        return "🤖 I'm CJPTV AI, created for the CJPTV project.";
+    }
 
-    userInput.value = "";
+    // What can you do?
+    if (
+        text.includes("what can you do") ||
+        text.includes("your capabilities") ||
+        text.includes("what do you do")
+    ) {
+        return "🚀 I can chat with you, explain things, help with questions, remember your name locally, generate images, and search the web when fresh information is needed.";
+    }
 
-    return true;
-  }
+    // How are you?
+    if (
+        text === "how are you" ||
+        text === "how are you?"
+    ) {
+        return "😎 I'm doing great and ready to help!";
+    }
 
-  return false;
+    // Thanks
+    if (
+        text === "thanks" ||
+        text === "thank you" ||
+        text === "thx"
+    ) {
+        return "You're welcome! 😎";
+    }
+
+    // Good morning
+    if (text.includes("good morning")) {
+        return "🌅 Good morning! Hope you're having a great day.";
+    }
+
+    // Good afternoon
+    if (text.includes("good afternoon")) {
+        return "☀️ Good afternoon! What are we working on today?";
+    }
+
+    // Good evening
+    if (text.includes("good evening")) {
+        return "🌆 Good evening! How can I help?";
+    }
+
+    // Bye
+    if (
+        text === "bye" ||
+        text === "goodbye" ||
+        text === "see you"
+    ) {
+        return "👋 See you later!";
+    }
+
+    return null;
 }
 
 // =========================
@@ -210,40 +205,88 @@ function handleGreeting(message) {
 // =========================
 async function generateImage(prompt) {
 
-  const url =
-    "https://image.pollinations.ai/prompt/" +
-    encodeURIComponent(prompt);
+    const url =
+        "https://image.pollinations.ai/prompt/" +
+        encodeURIComponent(prompt);
 
-  addMessage(
-    "🎨 Generating image...",
-    "ai-msg"
-  );
+    addMessage("🎨 Generating image...", "ai-msg");
 
-  const img = document.createElement("img");
+    const img = document.createElement("img");
 
-  img.src = url;
-  img.className = "ai-image";
-  img.alt = prompt;
+    img.src = url;
+    img.className = "ai-image";
+    img.alt = prompt;
 
-  img.onclick = () => {
+    img.onclick = () => {
 
-    const viewerImg =
-      document.getElementById("viewerImg");
+        const viewerImg =
+            document.getElementById("viewerImg");
 
-    const imageViewer =
-      document.getElementById("imageViewer");
+        const imageViewer =
+            document.getElementById("imageViewer");
 
-    if (viewerImg && imageViewer) {
+        if (viewerImg && imageViewer) {
 
-      viewerImg.src = url;
+            viewerImg.src = url;
+            imageViewer.style.display = "flex";
+        }
+    };
 
-      imageViewer.style.display = "flex";
+    chat.appendChild(img);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+// =========================
+// CHATBOT API
+// =========================
+async function askAI(message) {
+
+    const conversation = currentChat
+        .slice(-12)
+        .map(item => ({
+            role:
+                item.type === "user-msg"
+                    ? "user"
+                    : "assistant",
+            content: item.text
+        }));
+
+    const res = await fetch(BACKEND_URL, {
+
+        method: "POST",
+
+        headers: {
+            "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({
+            message,
+            conversation
+        })
+    });
+
+    let data;
+
+    try {
+        data = await res.json();
+    } catch {
+        throw new Error(
+            "Backend returned an invalid response."
+        );
     }
-  };
 
-  chat.appendChild(img);
+    if (!res.ok) {
 
-  chat.scrollTop = chat.scrollHeight;
+        throw new Error(
+            data.error ||
+            data.message ||
+            `Server error ${res.status}`
+        );
+    }
+
+    return data.reply ||
+        data.choices?.[0]?.message?.content ||
+        "No response received.";
 }
 
 // =========================
@@ -251,275 +294,313 @@ async function generateImage(prompt) {
 // =========================
 async function sendMessage() {
 
-  const message = userInput.value.trim();
+    const message = userInput.value.trim();
 
-  if (!message) return;
+    if (!message) return;
 
-  if (handleGreeting(message)) return;
+    // =========================
+    // LOCAL RESPONSE FIRST
+    // =========================
+    const localReply =
+        getLocalResponse(message);
 
-  const lower = message.toLowerCase();
+    if (localReply) {
 
-  // =========================
-  // SAVE NAME COMMAND
-  // =========================
-  if (lower.startsWith("my name is ")) {
+        if (hero) {
+            hero.classList.add("hide");
+        }
 
-    const name =
-      message.substring(11).trim();
+        addMessage(message, "user-msg");
 
-    saveMemory("name", name);
-
-    addMessage(
-      message,
-      "user-msg"
-    );
-
-    addMessage(
-      "😊 Nice to meet you, " +
-      name +
-      "! I'll remember your name.",
-      "ai-msg"
-    );
-
-    userInput.value = "";
-
-    return;
-  }
-
-  // =========================
-  // IMAGE GENERATION COMMAND
-  // =========================
-  const imageTriggers = [
-    "draw ",
-    "create image",
-    "generate image",
-    "make image",
-    "create an image",
-    "design",
-    "create poster of"
-  ];
-
-  if (
-    imageTriggers.some(
-      (trigger) =>
-        lower.startsWith(trigger)
-    )
-  ) {
-
-    const prompt =
-      message
-        .replace(
-          /draw|create image|generate image|make image|create an image|design|create poster of/gi,
-          ""
-        )
-        .trim();
-
-    addMessage(
-      message,
-      "user-msg"
-    );
-
-    userInput.value = "";
-
-    await generateImage(prompt);
-
-    return;
-  }
-
-  // =========================
-  // NAME RECALL COMMAND
-  // =========================
-  if (
-    lower.includes("what is my name") ||
-    lower.includes("what's my name")
-  ) {
-
-    const name = memory.name;
-
-    addMessage(
-      message,
-      "user-msg"
-    );
-
-    if (name) {
-
-      addMessage(
-        "👤 Your name is " + name,
-        "ai-msg"
-      );
-
-    } else {
-
-      addMessage(
-        "I don't know your name yet 😊",
-        "ai-msg"
-      );
-    }
-
-    userInput.value = "";
-
-    return;
-  }
-
-  // =========================
-  // STANDARD PIPELINE RESPONSE
-  // =========================
-  if (hero) {
-    hero.classList.add("hide");
-  }
-
-  addMessage(
-    message,
-    "user-msg"
-  );
-
-  userInput.value = "";
-
-  const loading =
-    document.createElement("div");
-
-  loading.className = "ai-msg";
-  loading.innerText = "Thinking...";
-
-  chat.appendChild(loading);
-
-  try {
-
-    const reply =
-      await askAI(message);
-
-    // Remove Thinking...
-    safeRemove(loading);
-
-    const div =
-      document.createElement("div");
-
-    div.className = "ai-msg";
-
-    chat.appendChild(div);
-
-    let i = 0;
-
-    function typeWriter() {
-
-      if (i < reply.length) {
-
-        div.textContent +=
-          reply.charAt(i);
-
-        i++;
-
-        chat.scrollTop =
-          chat.scrollHeight;
-
-        setTimeout(
-          typeWriter,
-          15
+        addMessage(
+            localReply,
+            "ai-msg"
         );
 
-      }
+        userInput.value = "";
+
+        return;
     }
 
-    typeWriter();
+    // =========================
+    // SAVE NAME
+    // =========================
+    const lower = message.toLowerCase();
 
-    // Save final AI message
-    currentChat.push({
-      text: reply,
-      type: "ai-msg"
-    });
+    if (lower.startsWith("my name is ")) {
 
-  } catch (err) {
+        const name =
+            message.substring(11).trim();
 
-    safeRemove(loading);
+        saveMemory("name", name);
+
+        addMessage(
+            message,
+            "user-msg"
+        );
+
+        addMessage(
+            "😊 Nice to meet you, " +
+            name +
+            "! I'll remember your name.",
+            "ai-msg"
+        );
+
+        userInput.value = "";
+
+        return;
+    }
+
+    // =========================
+    // NAME RECALL
+    // =========================
+    if (
+        lower.includes("what is my name") ||
+        lower.includes("what's my name")
+    ) {
+
+        addMessage(
+            message,
+            "user-msg"
+        );
+
+        const name = memory.name;
+
+        if (name) {
+
+            addMessage(
+                "👤 Your name is " +
+                name,
+                "ai-msg"
+            );
+
+        } else {
+
+            addMessage(
+                "I don't know your name yet 😊",
+                "ai-msg"
+            );
+        }
+
+        userInput.value = "";
+
+        return;
+    }
+
+    // =========================
+    // IMAGE GENERATION
+    // =========================
+    const imageTriggers = [
+        "draw ",
+        "create image",
+        "generate image",
+        "make image",
+        "create an image",
+        "design ",
+        "create poster of"
+    ];
+
+    if (
+        imageTriggers.some(trigger =>
+            lower.startsWith(trigger)
+        )
+    ) {
+
+        const prompt = message
+            .replace(
+                /draw|create image|generate image|make image|create an image|design|create poster of/gi,
+                ""
+            )
+            .trim();
+
+        if (hero) {
+            hero.classList.add("hide");
+        }
+
+        addMessage(
+            message,
+            "user-msg"
+        );
+
+        userInput.value = "";
+
+        await generateImage(prompt);
+
+        return;
+    }
+
+    // =========================
+    // NORMAL CHAT
+    // =========================
+    if (hero) {
+        hero.classList.add("hide");
+    }
 
     addMessage(
-      "Error: " + err.message,
-      "ai-msg"
+        message,
+        "user-msg"
     );
-  }
+
+    userInput.value = "";
+
+    const loading =
+        document.createElement("div");
+
+    loading.className = "ai-msg";
+    loading.innerText = "Thinking...";
+
+    chat.appendChild(loading);
+    chat.scrollTop = chat.scrollHeight;
+
+    try {
+
+        const reply =
+            await askAI(message);
+
+        safeRemove(loading);
+
+        const div =
+            document.createElement("div");
+
+        div.className = "ai-msg";
+
+        chat.appendChild(div);
+
+        let i = 0;
+
+        function typeWriter() {
+
+            if (i < reply.length) {
+
+                div.textContent +=
+                    reply.charAt(i);
+
+                i++;
+
+                chat.scrollTop =
+                    chat.scrollHeight;
+
+                setTimeout(
+                    typeWriter,
+                    12
+                );
+
+            } else {
+
+                currentChat.push({
+                    text: reply,
+                    type: "ai-msg"
+                });
+            }
+        }
+
+        typeWriter();
+
+    } catch (err) {
+
+        safeRemove(loading);
+
+        addMessage(
+            "⚠️ " +
+            (err.message ||
+                "Something went wrong."),
+            "ai-msg"
+        );
+    }
 }
 
 // =========================
-// EVENT LISTENERS & UI
+// IMAGE VIEWER
 // =========================
 const closeImgBtn =
-  document.getElementById("closeImage");
+    document.getElementById("closeImage");
 
 if (closeImgBtn) {
 
-  closeImgBtn.onclick = () => {
+    closeImgBtn.onclick = () => {
 
-    const imageViewer =
-      document.getElementById("imageViewer");
+        const imageViewer =
+            document.getElementById(
+                "imageViewer"
+            );
 
-    if (imageViewer)
-      imageViewer.style.display = "none";
-  };
+        if (imageViewer) {
+            imageViewer.style.display =
+                "none";
+        }
+    };
 }
 
 const imageViewer =
-  document.getElementById("imageViewer");
+    document.getElementById("imageViewer");
 
 if (imageViewer) {
 
-  imageViewer.onclick = (e) => {
+    imageViewer.onclick = (e) => {
 
-    if (
-      e.target.id ===
-      "imageViewer"
-    ) {
-
-      imageViewer.style.display =
-        "none";
-    }
-  };
+        if (
+            e.target.id ===
+            "imageViewer"
+        ) {
+            imageViewer.style.display =
+                "none";
+        }
+    };
 }
 
 const downloadImgBtn =
-  document.getElementById("downloadImage");
+    document.getElementById(
+        "downloadImage"
+    );
 
 if (downloadImgBtn) {
 
-  downloadImgBtn.onclick = () => {
+    downloadImgBtn.onclick = () => {
 
-    const img =
-      document.getElementById("viewerImg");
+        const img =
+            document.getElementById(
+                "viewerImg"
+            );
 
-    if (!img) return;
+        if (!img) return;
 
-    const a =
-      document.createElement("a");
+        const a =
+            document.createElement("a");
 
-    a.href = img.src;
+        a.href = img.src;
+        a.download =
+            "CJPTV_AI_Image.png";
 
-    a.download =
-      "SambhavAI_Image.png";
+        document.body.appendChild(a);
 
-    document.body.appendChild(a);
+        a.click();
 
-    a.click();
-
-    document.body.removeChild(a);
-  };
+        document.body.removeChild(a);
+    };
 }
 
-if (sendBtn)
-  sendBtn.addEventListener(
-    "click",
-    sendMessage
-  );
+// =========================
+// EVENTS
+// =========================
+if (sendBtn) {
+
+    sendBtn.addEventListener(
+        "click",
+        sendMessage
+    );
+}
 
 if (userInput) {
 
-  userInput.addEventListener(
-    "keypress",
-    (e) => {
+    userInput.addEventListener(
+        "keypress",
+        (e) => {
 
-      if (e.key === "Enter")
-        sendMessage();
-
-    }
-  );
+            if (e.key === "Enter") {
+                sendMessage();
+            }
+        }
+    );
 }
 
 // =========================
@@ -527,470 +608,553 @@ if (userInput) {
 // =========================
 async function loadTicker() {
 
-  try {
+    try {
 
-    const res =
-      await fetch(
-        "https://api.spaceflightnewsapi.net/v4/articles/?limit=8"
-      );
+        const res =
+            await fetch(
+                "https://api.spaceflightnewsapi.net/v4/articles/?limit=8"
+            );
 
-    const data =
-      await res.json();
+        const data =
+            await res.json();
 
-    const headlines =
-      data.results
-        .map(
-          (item) =>
-            "🔴 " + item.title
-        )
-        .join(
-          "     •     "
-        );
+        const headlines =
+            data.results
+                .map(
+                    item =>
+                        "🔴 " +
+                        item.title
+                )
+                .join(
+                    "     •     "
+                );
 
-    const ticker =
-      document.getElementById(
-        "tickerText"
-      );
+        const ticker =
+            document.getElementById(
+                "tickerText"
+            );
 
-    if (ticker)
-      ticker.textContent =
-        headlines;
+        if (ticker) {
+            ticker.textContent =
+                headlines;
+        }
 
-  } catch {
+    } catch {
 
-    const ticker =
-      document.getElementById(
-        "tickerText"
-      );
+        const ticker =
+            document.getElementById(
+                "tickerText"
+            );
 
-    if (ticker)
-      ticker.textContent =
-        "Unable to load latest headlines.";
-  }
+        if (ticker) {
+
+            ticker.textContent =
+                "Unable to load latest headlines.";
+        }
+    }
 }
 
 loadTicker();
 
 setInterval(
-  loadTicker,
-  300000
+    loadTicker,
+    300000
 );
 
 // =========================
 // BACKGROUND PARTICLES
 // =========================
 const canvas =
-  document.getElementById(
-    "particleCanvas"
-  );
+    document.getElementById(
+        "particleCanvas"
+    );
 
 if (canvas) {
 
-  const ctx =
-    canvas.getContext("2d");
+    const ctx =
+        canvas.getContext("2d");
 
-  function resizeCanvas() {
+    function resizeCanvas() {
 
-    canvas.width =
-      window.innerWidth;
+        canvas.width =
+            window.innerWidth;
 
-    canvas.height =
-      window.innerHeight;
-  }
-
-  resizeCanvas();
-
-  window.addEventListener(
-    "resize",
-    resizeCanvas
-  );
-
-  const particles = [];
-
-  for (
-    let i = 0;
-    i < 45;
-    i++
-  ) {
-
-    particles.push({
-
-      x:
-        Math.random() *
-        canvas.width,
-
-      y:
-        Math.random() *
-        canvas.height,
-
-      r:
-        Math.random() *
-          3 +
-        2,
-
-      dx:
-        (Math.random() - 0.5) *
-        1.2,
-
-      dy:
-        (Math.random() - 0.5) *
-        1.2
-    });
-  }
-
-  function animate() {
-
-    ctx.clearRect(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
-
-    for (
-      let i = 0;
-      i < particles.length;
-      i++
-    ) {
-
-      const p =
-        particles[i];
-
-      p.x += p.dx;
-      p.y += p.dy;
-
-      if (
-        p.x < 0 ||
-        p.x > canvas.width
-      )
-        p.dx *= -1.2;
-
-      if (
-        p.y < 0 ||
-        p.y > canvas.height
-      )
-        p.dy *= -1.2;
-
-      ctx.beginPath();
-
-      ctx.arc(
-        p.x,
-        p.y,
-        p.r,
-        0,
-        Math.PI * 2
-      );
-
-      ctx.fillStyle =
-        "rgba(255,0,0,0.35)";
-
-      ctx.shadowColor =
-        "red";
-
-      ctx.shadowBlur =
-        15;
-
-      ctx.fill();
-
-      for (
-        let j = i + 1;
-        j < particles.length;
-        j++
-      ) {
-
-        const p2 =
-          particles[j];
-
-        const dist =
-          Math.hypot(
-            p.x - p2.x,
-            p.y - p2.y
-          );
-
-        if (dist < 120) {
-
-          ctx.beginPath();
-
-          ctx.moveTo(
-            p.x,
-            p.y
-          );
-
-          ctx.lineTo(
-            p2.x,
-            p2.y
-          );
-
-          ctx.strokeStyle =
-            "rgba(255,0,0,0.08)";
-
-          ctx.lineWidth = 1;
-
-          ctx.stroke();
-        }
-      }
+        canvas.height =
+            window.innerHeight;
     }
 
-    requestAnimationFrame(
-      animate
-    );
-  }
+    resizeCanvas();
 
-  animate();
+    window.addEventListener(
+        "resize",
+        resizeCanvas
+    );
+
+    const particles = [];
+
+    for (let i = 0; i < 45; i++) {
+
+        particles.push({
+
+            x:
+                Math.random() *
+                canvas.width,
+
+            y:
+                Math.random() *
+                canvas.height,
+
+            r:
+                Math.random() *
+                3 +
+                2,
+
+            dx:
+                (Math.random() -
+                    0.5) *
+                1.2,
+
+            dy:
+                (Math.random() -
+                    0.5) *
+                1.2
+        });
+    }
+
+    function animate() {
+
+        ctx.clearRect(
+            0,
+            0,
+            canvas.width,
+            canvas.height
+        );
+
+        for (
+            let i = 0;
+            i < particles.length;
+            i++
+        ) {
+
+            const p =
+                particles[i];
+
+            p.x += p.dx;
+            p.y += p.dy;
+
+            if (
+                p.x < 0 ||
+                p.x > canvas.width
+            ) {
+                p.dx *= -1.2;
+            }
+
+            if (
+                p.y < 0 ||
+                p.y > canvas.height
+            ) {
+                p.dy *= -1.2;
+            }
+
+            ctx.beginPath();
+
+            ctx.arc(
+                p.x,
+                p.y,
+                p.r,
+                0,
+                Math.PI * 2
+            );
+
+            ctx.fillStyle =
+                "rgba(255,0,0,0.35)";
+
+            ctx.shadowColor =
+                "red";
+
+            ctx.shadowBlur =
+                15;
+
+            ctx.fill();
+
+            for (
+                let j = i + 1;
+                j < particles.length;
+                j++
+            ) {
+
+                const p2 =
+                    particles[j];
+
+                const dist =
+                    Math.hypot(
+                        p.x - p2.x,
+                        p.y - p2.y
+                    );
+
+                if (dist < 120) {
+
+                    ctx.beginPath();
+
+                    ctx.moveTo(
+                        p.x,
+                        p.y
+                    );
+
+                    ctx.lineTo(
+                        p2.x,
+                        p2.y
+                    );
+
+                    ctx.strokeStyle =
+                        "rgba(255,0,0,0.08)";
+
+                    ctx.lineWidth = 1;
+
+                    ctx.stroke();
+                }
+            }
+        }
+
+        requestAnimationFrame(
+            animate
+        );
+    }
+
+    animate();
 }
 
 // =========================
-// NEW CHAT BUTTON
+// NEW CHAT
 // =========================
-document.getElementById(
-  "newChatBtn"
-).onclick = () => {
-
-  if (currentChat.length) {
-
-    chats.unshift({
-
-      title:
-        currentChat[0].text.substring(
-          0,
-          30
-        ),
-
-      messages:
-        currentChat
-    });
-
-    localStorage.setItem(
-      "cjptv_chats",
-      JSON.stringify(chats)
+const newChatBtn =
+    document.getElementById(
+        "newChatBtn"
     );
-  }
 
-  currentChat = [];
+if (newChatBtn) {
 
-  chat.innerHTML = "";
+    newChatBtn.onclick = () => {
 
-  hero.classList.remove(
-    "hide"
-  );
+        if (currentChat.length) {
 
-  loadHistory();
-};
+            chats.unshift({
+
+                title:
+                    currentChat[0].text
+                        .substring(0, 30),
+
+                messages:
+                    currentChat
+            });
+
+            localStorage.setItem(
+                "cjptv_chats",
+                JSON.stringify(chats)
+            );
+        }
+
+        currentChat = [];
+
+        chat.innerHTML = "";
+
+        if (hero) {
+            hero.classList.remove(
+                "hide"
+            );
+        }
+
+        loadHistory();
+    };
+}
 
 // =========================
 // CHAT HISTORY
 // =========================
 function loadHistory() {
 
-  const list =
-    document.getElementById(
-      "historyList"
-    );
+    const list =
+        document.getElementById(
+            "historyList"
+        );
 
-  list.innerHTML = "";
+    if (!list) return;
 
-  chats.forEach((c) => {
+    list.innerHTML = "";
 
-    const item =
-      document.createElement(
-        "div"
-      );
+    chats.forEach((c) => {
 
-    item.innerText =
-      c.title;
+        const item =
+            document.createElement(
+                "div"
+            );
 
-    item.onclick = () => {
+        item.innerText =
+            c.title;
 
-      chat.innerHTML = "";
+        item.onclick = () => {
 
-      currentChat = [];
+            chat.innerHTML = "";
 
-      c.messages.forEach(
-        (m) => {
+            currentChat = [];
 
-          addMessage(
-            m.text,
-            m.type
-          );
-        }
-      );
-    };
+            c.messages.forEach(
+                (m) => {
 
-    list.appendChild(
-      item
-    );
-  });
+                    addMessage(
+                        m.text,
+                        m.type
+                    );
+                }
+            );
+        };
+
+        list.appendChild(item);
+    });
 }
 
 // =========================
 // GUEST LOGIN
 // =========================
-document.getElementById(
-  "guestBtn"
-).onclick = async () => {
-
-  try {
-
-    await signInAnonymously(
-      auth
+const guestBtn =
+    document.getElementById(
+        "guestBtn"
     );
 
-  } catch (err) {
+if (guestBtn) {
 
-    console.error(err);
-  }
-};
+    guestBtn.onclick = async () => {
+
+        try {
+
+            await signInAnonymously(
+                auth
+            );
+
+        } catch (err) {
+
+            console.error(err);
+        }
+    };
+}
 
 // =========================
 // GOOGLE LOGIN
 // =========================
-document.getElementById(
-  "googleLoginBtn"
-).onclick = async () => {
-
-  try {
-
-    await signInWithPopup(
-      auth,
-      provider
+const googleLoginBtn =
+    document.getElementById(
+        "googleLoginBtn"
     );
 
-  } catch (err) {
+if (googleLoginBtn) {
 
-    console.error(err);
+    googleLoginBtn.onclick =
+        async () => {
 
-    alert(err.message);
-  }
-};
+            try {
+
+                await signInWithPopup(
+                    auth,
+                    provider
+                );
+
+            } catch (err) {
+
+                console.error(err);
+
+                alert(
+                    err.message
+                );
+            }
+        };
+}
 
 // =========================
-// AUTH STATE
+// FIREBASE AUTH STATE
 // =========================
 onAuthStateChanged(
-  auth,
-  (user) => {
+    auth,
+    (user) => {
 
-    if (!user) return;
+        if (!user) return;
 
-    console.log(
-      "Photo URL:",
-      user.photoURL
-    );
+        console.log(
+            "Photo URL:",
+            user.photoURL
+        );
 
-    document.getElementById(
-      "nameModal"
-    ).style.display = "none";
+        const nameModal =
+            document.getElementById(
+                "nameModal"
+            );
 
-    const loginBtn =
-      document.getElementById(
-        "sidebarLoginBtn"
-      );
+        if (nameModal) {
+            nameModal.style.display =
+                "none";
+        }
 
-    if (user.isAnonymous) {
+        const loginBtn =
+            document.getElementById(
+                "sidebarLoginBtn"
+            );
 
-      heroText.innerText =
-        "Welcome, Guest 👋";
+        if (user.isAnonymous) {
 
-      document.getElementById(
-        "userName"
-      ).innerText =
-        "Guest";
+            if (heroText) {
+                heroText.innerText =
+                    "Welcome, Guest 👋";
+            }
 
-      document.getElementById(
-        "userStatus"
-      ).innerText =
-        "Guest Mode";
+            const userName =
+                document.getElementById(
+                    "userName"
+                );
 
-      loginBtn.innerText =
-        "Login";
+            const userStatus =
+                document.getElementById(
+                    "userStatus"
+                );
 
-    } else {
+            if (userName) {
+                userName.innerText =
+                    "Guest";
+            }
 
-      heroText.innerText =
-        `Welcome, ${user.displayName} 👋`;
+            if (userStatus) {
+                userStatus.innerText =
+                    "Guest Mode";
+            }
 
-      document.getElementById(
-        "userName"
-      ).innerText =
-        user.displayName;
+            if (loginBtn) {
+                loginBtn.innerText =
+                    "Login";
+            }
 
-      document.getElementById(
-        "userStatus"
-      ).innerText =
-        user.email;
+        } else {
 
-      document.getElementById(
-        "userAvatar"
-      ).src =
-        user.photoURL ||
-        `https://ui-avatars.com/api/?name=${encodeURIComponent(
-          user.displayName
-        )}&background=f8501c&color=fff`;
+            if (heroText) {
 
-      loginBtn.innerText =
-        "Logout";
+                heroText.innerText =
+                    `Welcome, ${user.displayName} 👋`;
+            }
+
+            const userName =
+                document.getElementById(
+                    "userName"
+                );
+
+            const userStatus =
+                document.getElementById(
+                    "userStatus"
+                );
+
+            const userAvatar =
+                document.getElementById(
+                    "userAvatar"
+                );
+
+            if (userName) {
+                userName.innerText =
+                    user.displayName;
+            }
+
+            if (userStatus) {
+                userStatus.innerText =
+                    user.email;
+            }
+
+            if (userAvatar) {
+
+                userAvatar.src =
+                    user.photoURL ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(
+                        user.displayName || "User"
+                    )}&background=f8501c&color=fff`;
+            }
+
+            if (loginBtn) {
+                loginBtn.innerText =
+                    "Logout";
+            }
+        }
     }
-  }
 );
 
 // =========================
-// SIDEBAR LOGIN
+// LOGIN / LOGOUT
 // =========================
-document.getElementById(
-  "sidebarLoginBtn"
-).onclick = async () => {
-
-  console.log(
-    "LOGIN CLICKED"
-  );
-
-  try {
-
-    if (auth.currentUser) {
-
-      if (
-        auth.currentUser
-          .isAnonymous
-      ) {
-
-        await signOut(auth);
-
-        await signInWithPopup(
-          auth,
-          provider
-        );
-
-      } else {
-
-        await signOut(auth);
-
-        location.reload();
-      }
-
-    } else {
-
-      await signInWithPopup(
-        auth,
-        provider
-      );
-    }
-
-  } catch (err) {
-
-    console.log(err);
-
-    alert(
-      err.code +
-      "\n" +
-      err.message
+const sidebarLoginBtn =
+    document.getElementById(
+        "sidebarLoginBtn"
     );
-  }
-};
+
+if (sidebarLoginBtn) {
+
+    sidebarLoginBtn.onclick =
+        async () => {
+
+            console.log(
+                "LOGIN CLICKED"
+            );
+
+            try {
+
+                if (auth.currentUser) {
+
+                    if (
+                        auth.currentUser
+                            .isAnonymous
+                    ) {
+
+                        await signOut(
+                            auth
+                        );
+
+                        await signInWithPopup(
+                            auth,
+                            provider
+                        );
+
+                    } else {
+
+                        await signOut(
+                            auth
+                        );
+
+                        location.reload();
+                    }
+
+                } else {
+
+                    await signInWithPopup(
+                        auth,
+                        provider
+                    );
+                }
+
+            } catch (err) {
+
+                console.log(err);
+
+                alert(
+                    err.code +
+                    "\n" +
+                    err.message
+                );
+            }
+        };
+}
 
 // =========================
-// COPYRIGHT
+// COPYRIGHT YEAR
 // =========================
-document.getElementById(
-  "copyrightYear"
-).textContent =
-  new Date().getFullYear();
+const copyrightYear =
+    document.getElementById(
+        "copyrightYear"
+    );
+
+if (copyrightYear) {
+
+    copyrightYear.textContent =
+        new Date().getFullYear();
+}
